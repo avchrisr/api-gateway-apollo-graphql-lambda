@@ -1,0 +1,16 @@
+{
+    "name": "api-gateway-apollo-graphql-lambda",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "sam local start-api --template-file cloudformation.yaml",
+        "deploy": "S3_BUCKET=cr-test-lambda-deploy-graphql ./bin/deploy.sh"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "apollo-server-lambda": "^2.24.0",
+        "graphql": "^15.5.0"
+    }
+}

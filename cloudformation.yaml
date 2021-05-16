@@ -1,0 +1,152 @@
+#
+# ref)
+# https://www.freecodecamp.org/news/how-to-build-and-deploy-graphql-server-in-aws-lambda-using-nodejs-and-cloudformation/
+#
+# - PRE-REQUISITE
+#   1. prepare Lambda function in a zipped format in S3 bucket (e.g. cr-test-lambda-deploy-graphql)
+#      - $ npm install --arch=x64 --platform=linux --target=12.13.0 sharp
+#      - $ zip -r dist-latest.zip src node_modules package.json
+#      - $ zipinfo dist-latest.zip
+#      - aws s3 cp dist-latest.zip s3://cr-test-lambda-deploy-graphql/dist-latest.zip
+#      - aws s3 ls s3://cr-test-lambda-deploy-graphql
+#
+# --------------------------------------------------
+# USAGE
+# --------------------------------------------------
+# aws cloudformation deploy --region us-west-2 --stack-name cr-test-api-gateway-apollo-graphql-lambda \
+#   --template-file ./cloudformation.yaml \
+#   --parameter-overrides \
+#   BucketName=cr-test-lambda-deploy-graphql \
+#   Version=latest \
+#   --capabilities CAPABILITY_NAMED_IAM
+#
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: GraphQL server on AWS lambda
+
+Parameters:
+    Version:
+        Description: Application version number
+        Type: String
+
+    BucketName:
+        Description: S3 bucket name where the source code lives
+        Type: String
+
+Resources:
+    # --------  Lambda function and Permission and Role  ---------
+    LambdaExecutionRole:
+        Type: "AWS::IAM::Role"
+        Properties:
+            Description: "Allows associated Lambda functions to have full access to CloudWatch logs. Must be less than 64 characters max."
+            # role name is optional (64 character max). If not provided, a unique physical ID will be automatically generated.
+            # RoleName: !Sub "${AWS::StackName}-lambda-logging-full-access-${AWS::Region}"
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: "Allow"
+                      Principal:
+                          Service:
+                              - "lambda.amazonaws.com"
+                      Action:
+                          - "sts:AssumeRole"
+            Policies:
+                - PolicyName: "LambdaFunctionPolicy"
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - logs:CreateLogGroup
+                                - logs:CreateLogStream
+                                - logs:PutLogEvents
+                            Resource: "*"
+            Tags:
+                - Key: stack-name
+                  Value: !Sub "${AWS::StackName}"
+                - Key: Name
+                  Value: !Sub "${AWS::StackName}-lambda-logger-role"
+                - Key: cloudformation
+                  Value: "true"
+
+    LambdaFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            Code:
+                S3Bucket: !Ref BucketName
+                S3Key: !Sub dist-${Version}.zip
+            Handler: src/index.handler
+            Description: GraphQL Apollo Server
+            MemorySize: 128 # 128 by default if omitted.
+            Role: !GetAtt LambdaExecutionRole.Arn
+            Runtime: nodejs14.x
+            Timeout: 10
+
+    GraphQLApi:
+        Type: "AWS::ApiGateway::RestApi"
+        Properties:
+            Name: apollo-graphql-api
+            Tags:
+                - Key: stack-name
+                  Value: !Sub "${AWS::StackName}"
+                - Key: Name
+                  Value: !Sub "${AWS::StackName}-api-gateway-api"
+                - Key: cloudformation
+                  Value: "true"
+
+    GraphQLApiAuthorizer:
+        Type: AWS::ApiGateway::Authorizer
+        Properties:
+            Name: !Sub "${AWS::StackName}-api-authorizer"
+            Type: COGNITO_USER_POOLS
+            ProviderARNs:
+                - arn:aws:cognito-idp:us-west-2:022629765845:userpool/us-west-2_rXPhZ5xJt
+            IdentitySource: method.request.header.Authorization
+            RestApiId: !Ref GraphQLApi
+
+    GraphQLApiResource:
+        Type: "AWS::ApiGateway::Resource"
+        Properties:
+            ParentId: !GetAtt GraphQLApi.RootResourceId
+            RestApiId: !Ref GraphQLApi
+            PathPart: "graphql"
+
+    GraphQLApiMethod:
+        Type: "AWS::ApiGateway::Method"
+        Properties:
+            RestApiId: !Ref GraphQLApi
+            ResourceId: !Ref GraphQLApiResource
+            # AuthorizationType: None
+            AuthorizationType: COGNITO_USER_POOLS
+            AuthorizerId: !Ref GraphQLApiAuthorizer
+            # AuthorizationScopes:
+            #     - NAME
+            #     - PHONE_NUMBER
+            HttpMethod: POST
+            Integration:
+                Type: AWS_PROXY
+                IntegrationHttpMethod: POST
+                Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
+
+    GraphQLApiDeployment:
+        Type: "AWS::ApiGateway::Deployment"
+        Properties:
+            RestApiId: !Ref GraphQLApi
+            StageName: v1
+        DependsOn:
+            - GraphQLApiResource
+            - GraphQLApiMethod
+
+    # give API-Gateway permission to invoke the lambda function
+    GraphQLApiPermission:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            Action: lambda:invokeFunction
+            FunctionName: !GetAtt LambdaFunction.Arn
+            Principal: apigateway.amazonaws.com
+            SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GraphQLApi}/*
+
+Outputs:
+    ApiUrl:
+        Description: Invoke url of API Gateway endpoint
+        Value: !Sub https://${GraphQLApi}.execute-api.${AWS::Region}.amazonaws.com/v1/graphql
