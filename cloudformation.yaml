@@ -116,7 +116,7 @@ Resources:
         Properties:
             RestApiId: !Ref GraphQLApi
             ResourceId: !Ref GraphQLApiResource
-            # AuthorizationType: None
+            # AuthorizationType: None               # required if not using any authorizer.
             AuthorizationType: COGNITO_USER_POOLS
             AuthorizerId: !Ref GraphQLApiAuthorizer
             # AuthorizationScopes:
