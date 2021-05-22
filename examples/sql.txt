@@ -1,0 +1,80 @@
+// ---------------------------------------------
+// create sequence
+// ---------------------------------------------
+CREATE SEQUENCE sequence_number MINVALUE 1;
+
+// ---------------------------------------------
+// create table & index
+// ---------------------------------------------
+CREATE TABLE cr_test_table1 ( data jsonb );
+CREATE UNIQUE INDEX cr_test_table1_primary_key ON cr_test_table1 USING BTREE (((data->>'id')::BIGINT));
+
+// ---------------------------------------------
+// insert
+// ---------------------------------------------
+INSERT INTO cr_test_table1 (data) VALUES ('{"id": 1, "title": "Sleeping Beauties", "genres": ["Fiction", "Thriller", "Horror"], "published": false}');
+INSERT INTO cr_test_table1 (data) VALUES ('{"id": 2, "title": "Influence", "genres": ["Marketing & Sales", "Self-Help ", "Psychology"], "published": true}');
+INSERT INTO cr_test_table1 (data) VALUES ('{"id": 3, "title": "The Dictator''s Handbook", "genres": ["Law", "Politics"], "authors": ["Bruce Bueno de Mesquita", "Alastair Smith"], "published": true}');
+INSERT INTO cr_test_table1 (data) VALUES ('{"id": 4, "title": "Deep Work", "genres": ["Productivity", "Reference"], "published": true}');
+INSERT INTO cr_test_table1 (data) VALUES ('{"id": 5, "title": "Siddhartha", "genres": ["Fiction", "Spirituality"], "published": true}');
+
+// ---------------------------------------------
+// query
+// ---------------------------------------------
+SELECT * FROM cr_test_table1;
+SELECT data->'title' FROM cr_test_table1;
+SELECT data->'title' FROM cr_test_table1 WHERE data->'published' = 'false';
+SELECT data->'title' FROM cr_test_table1 WHERE data->'genres' @> '["Fiction", "Horror"]'::jsonb;
+SELECT COUNT(*) FROM cr_test_table1 WHERE data ? 'authors';                                             // check existence
+
+
+
+
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------
+-- system relations
+---------------------------------------------
+CREATE SEQUENCE sequence_number MINVALUE 1;
+-- CREATE TABLE _deleted_documents ( data jsonb );
+-- CREATE UNIQUE INDEX deleted_documents_primary_key ON _deleted_documents USING BTREE (((data->>'id')::TEXT));
+-- CREATE SEQUENCE journal_sequence_number;
+
+---------------------------------------------
+-- Tables
+---------------------------------------------
+
+-- cr_test_table1
+CREATE TABLE cr_test_table1 ( data jsonb );
+CREATE UNIQUE INDEX cr_test_table1_primary_key ON cr_test_table1 USING BTREE (((data->>'id')::BIGINT));
+
+-- -- local_patient_local_provider_clinical_item
+-- CREATE TABLE local_patient_local_provider_clinical_item ( data jsonb );
+-- CREATE INDEX local_patient_local_provider_clinical_items_local_provider_ix ON local_patient_local_provider_clinical_item USING btree(((data->>'localProvider')::BIGINT));
+-- CREATE INDEX local_patient_local_provider_clinical_items_clinical_item_ix ON local_patient_local_provider_clinical_item USING btree(((data->>'clinicalItem')::BIGINT));
+-- CREATE INDEX local_patient_local_provider_clinical_items_local_patient_ix ON local_patient_local_provider_clinical_item USING btree(((data->>'localPatient')::BIGINT));
+-- CREATE UNIQUE INDEX local_patient_local_provider_clinical_items_ix ON local_patient_local_provider_clinical_item USING btree(((data->>'localPatient')::BIGINT), ((data->>'clinicalItem')::BIGINT), ((data->>'localProvider')::BIGINT));
+
+-- -- patient_group_link
+-- CREATE TABLE patient_group_link ( data jsonb );
+-- CREATE INDEX patient_group_link_patientGroup_ix ON patient_group_link USING btree(((data->'_link'->>'patientGroup')::BIGINT));
+-- CREATE INDEX patient_group_link_patient_ix ON patient_group_link USING btree(((data->'_link'->>'patient')::BIGINT));
+-- CREATE UNIQUE INDEX patient_group_link_links_ix ON patient_group_link USING btree(((data->'_link'->>'patient')::BIGINT), ((data->'_link'->>'patientGroup')::BIGINT));
+
+-- --vital_sign_aggregate
+-- CREATE TABLE vital_sign_aggregate ( data jsonb );
+-- CREATE INDEX vital_sign_aggregate_patientLocalId_idx ON vital_sign_aggregate USING btree(((data->>'patientLocalId'::text)));
+-- CREATE INDEX vital_sign_aggregate_listOfLocalCodes_gin_idx ON vital_sign_aggregate USING gin ((data->'listOfLocalCodes') jsonb_path_ops);
+-- CREATE UNIQUE INDEX vital_sign_aggregate_primary_key ON vital_sign_aggregate USING BTREE (((data->>'id')::BIGINT));
+-- CREATE UNIQUE INDEX vital_sign_lookup_ix ON vital_sign_aggregate USING btree((data->>'localId'), (data->>'itemCode'), (data->>'subCode'), (data->>'dataSourceIdentifier'), (data->>'patientLocalId'), (data->'activityTime'->>'value'));
+-- CREATE TRIGGER vital_sign_aggregate_journal_trgr AFTER INSERT OR UPDATE OR DELETE ON vital_sign_aggregate FOR EACH ROW EXECUTE PROCEDURE insert_to_update_journal();
+
+-- CREATE TABLE vital_sign_events ( data jsonb );
+-- CREATE INDEX vital_sign_events_aggId_idx ON vital_sign_events USING btree(((data->>'aggId'::text)::BIGINT));
+-- CREATE INDEX vital_sign_events_transactionId_idx ON vital_sign_events USING btree(((data->>'transactionId'::text)::BIGINT));
+-- CREATE INDEX vital_sign_events_localPatientAggregateId_idx ON vital_sign_events USING btree(((data->>'localPatientAggregateId'::text)::BIGINT));
+-- CREATE INDEX vital_sign_events_patientLocalId_idx ON vital_sign_events USING btree(((data->>'patientLocalId'::text)));
+
+
+

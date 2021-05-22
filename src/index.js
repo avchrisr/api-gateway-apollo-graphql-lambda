@@ -1,24 +1,11 @@
-const { ApolloServer, gql } = require('apollo-server-lambda')
+const { ApolloServer } = require('apollo-server-lambda')
+const typeDefs = require('./schema')
+const resolvers = require('./resolvers')
 
-const typeDefs = gql`
-  type Query {
-    user: User
-  }
-
-  type User {
-    id: ID
-    name: String
-    company: String
-  }
-`
-
-const resolvers = {
-    Query: {
-        user: () => ({ id: 123, name: 'John Doe', company: 'Everguard' })
-    }
-}
-
-const server = new ApolloServer({ typeDefs, resolvers })
+const server = new ApolloServer({
+    typeDefs,
+    resolvers
+})
 
 exports.handler = server.createHandler()
 

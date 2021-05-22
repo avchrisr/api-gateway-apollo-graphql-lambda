@@ -18,6 +18,11 @@
 #   --parameter-overrides \
 #   BucketName=cr-test-lambda-deploy-graphql \
 #   Version=latest \
+#	AwsRegion=us-west-2 \
+#	AwsAccessKeyId=XXXXXXXXXXXXX \
+#	AwsSecretAccessKey=xxxxxxxxxxxxxx \
+#	RdsSecretsManagerArn=arn:aws:secretsmanager:us-west-2:022629765845:secret:cr-test-aurora-pg-serverless-1-secret-MDnx21 \
+#	RdsResourceArn=arn:aws:rds:us-west-2:022629765845:cluster:cr-test-aurora-pg-serverless-1 \
 #   --capabilities CAPABILITY_NAMED_IAM
 #
 
@@ -28,17 +33,35 @@ Parameters:
     Version:
         Description: Application version number
         Type: String
-
     BucketName:
         Description: S3 bucket name where the source code lives
         Type: String
+    AwsRegion:
+        Type: String
+        Description: AWS Region, in which RDS is located
+        Default: us-west-2
+    AwsAccessKeyId:
+        Type: String
+        Description: AWS Access Key ID to access RDS
+        NoEcho: true
+    AwsSecretAccessKey:
+        Type: String
+        Description: AWS Secret Access Key to access RDS
+        NoEcho: true
+    RdsSecretsManagerArn:
+        Type: String
+        Description: Secrets to gain access to RDS
+        NoEcho: true
+    RdsResourceArn:
+        Type: String
+        Description: RDS ARN
 
 Resources:
     # --------  Lambda function and Permission and Role  ---------
     LambdaExecutionRole:
         Type: "AWS::IAM::Role"
         Properties:
-            Description: "Allows associated Lambda functions to have full access to CloudWatch logs. Must be less than 64 characters max."
+            Description: "Allows associated Lambda functions to have access to CW, RDS, Secrets Manager. Must be less than 64 characters max."
             # role name is optional (64 character max). If not provided, a unique physical ID will be automatically generated.
             # RoleName: !Sub "${AWS::StackName}-lambda-logging-full-access-${AWS::Region}"
             AssumeRolePolicyDocument:
@@ -61,6 +84,16 @@ Resources:
                                 - logs:CreateLogStream
                                 - logs:PutLogEvents
                             Resource: "*"
+                        ## verified that RDS and SecretsManager Allow policy were not needed. It still returned data from Serverless RDS.
+                        #   - Effect: Allow
+                        #     Action:
+                        #         - rds-data:*
+                        #     Resource: "*"
+                        #   - Effect: Allow
+                        #     Action:
+                        #         - secretsmanager:GetSecretValue
+                        #     Resource:
+                        #         - !Ref RdsSecretsManagerArn
             Tags:
                 - Key: stack-name
                   Value: !Sub "${AWS::StackName}"
@@ -72,6 +105,13 @@ Resources:
     LambdaFunction:
         Type: AWS::Lambda::Function
         Properties:
+            Environment:
+                Variables:
+                    MY_AWS_REGION: !Ref AwsRegion
+                    MY_AWS_ACCESS_KEY_ID: !Ref AwsAccessKeyId
+                    MY_AWS_SECRET_ACCESS_KEY: !Ref AwsSecretAccessKey
+                    RDS_SECRETS_MANAGER_ARN: !Ref RdsSecretsManagerArn
+                    RDS_RESOURCE_ARN: !Ref RdsResourceArn
             Code:
                 S3Bucket: !Ref BucketName
                 S3Key: !Sub dist-${Version}.zip

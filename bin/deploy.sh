@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # USAGE
-# S3_BUCKET=cr-test-lambda-deploy-graphql ./bin/deploy.sh
+# MY_AWS_ACCESS_KEY_ID=xxxxxxxxx MY_AWS_SECRET_ACCESS_KEY=xxxxxxxxx S3_BUCKET=cr-test-lambda-deploy-graphql ./bin/deploy.sh
 
 set -euo pipefail
 
@@ -10,6 +10,9 @@ CURRENT_DIR=$(pwd)
 ROOT_DIR="$( dirname "${BASH_SOURCE[0]}" )"/..
 APP_VERSION=$(date +%s)
 STACK_NAME=cr-test-api-gateway-apollo-graphql-lambda
+MY_AWS_REGION=us-west-2
+RDS_RESOURCE_ARN=arn:aws:rds:us-west-2:022629765845:cluster:cr-test-aurora-pg-serverless-1
+RDS_SECRETS_MANAGER_ARN=arn:aws:secretsmanager:us-west-2:022629765845:secret:cr-test-aurora-pg-serverless-1-secret-MDnx21
 
 cd $ROOT_DIR
 
@@ -28,7 +31,14 @@ echo "deploying application.."
 aws cloudformation deploy --region us-west-2 \
   --stack-name $STACK_NAME \
   --template-file $ROOT_DIR/cloudformation.yaml \
-  --parameter-overrides Version=$APP_VERSION BucketName=$S3_BUCKET \
+  --parameter-overrides \
+  Version=$APP_VERSION \
+  BucketName=$S3_BUCKET \
+  AwsRegion=$MY_AWS_REGION \
+  AwsAccessKeyId=$MY_AWS_ACCESS_KEY_ID \
+  AwsSecretAccessKey=$MY_AWS_SECRET_ACCESS_KEY \
+  RdsSecretsManagerArn=$RDS_SECRETS_MANAGER_ARN \
+  RdsResourceArn=$RDS_RESOURCE_ARN \
   --capabilities CAPABILITY_NAMED_IAM
 
 # Get the api url from output of cloudformation stack
