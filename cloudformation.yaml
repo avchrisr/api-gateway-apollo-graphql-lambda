@@ -1,4 +1,9 @@
 #
+# CAVEAT
+# -----------
+# when API Gateway is changed, you need to MANUALLY DEPLOY the updated API in AWS Console
+#   because since the stage name is the same, CloudFormation sees it as no changes made and will not automatically deploy
+#
 # ref)
 # https://www.freecodecamp.org/news/how-to-build-and-deploy-graphql-server-in-aws-lambda-using-nodejs-and-cloudformation/
 #
@@ -168,6 +173,40 @@ Resources:
                 IntegrationHttpMethod: POST
                 Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
 
+    # below enables CORS in API Gateway -- verified to be working!
+    #   ref) https://stackoverflow.com/questions/40292888/enable-cors-for-api-gateway-in-cloudformation-template
+    # CORS also need to be enabled on Apollo server in Lambda
+    #   ref) https://www.apollographql.com/docs/apollo-server/deployment/lambda/
+    # Apollo Client (FE) must use a valid auth token, or you may see misleading errors related to CORS.
+    OptionsMethodForEnablingCORS:
+        Type: "AWS::ApiGateway::Method"
+        Properties:
+            RestApiId: !Ref GraphQLApi
+            ResourceId: !Ref GraphQLApiResource
+            AuthorizationType: None # required if not using any authorizer.
+            HttpMethod: OPTIONS
+            Integration:
+                Type: MOCK
+                IntegrationResponses:
+                    - StatusCode: "200"
+                      ResponseParameters:
+                          method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Cache-Control'"
+                          method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+                          method.response.header.Access-Control-Allow-Origin: "'*'"
+                      ResponseTemplates:
+                          application/json: ""
+                PassthroughBehavior: WHEN_NO_MATCH
+                RequestTemplates:
+                    application/json: '{"statusCode": 200}'
+            MethodResponses:
+                - StatusCode: "200"
+                  ResponseModels:
+                      application/json: "Empty"
+                  ResponseParameters:
+                      method.response.header.Access-Control-Allow-Headers: false
+                      method.response.header.Access-Control-Allow-Methods: false
+                      method.response.header.Access-Control-Allow-Origin: false
+
     GraphQLApiDeployment:
         Type: "AWS::ApiGateway::Deployment"
         Properties:
@@ -176,6 +215,7 @@ Resources:
         DependsOn:
             - GraphQLApiResource
             - GraphQLApiMethod
+            - OptionsMethodForEnablingCORS
 
     # give API-Gateway permission to invoke the lambda function
     GraphQLApiPermission:

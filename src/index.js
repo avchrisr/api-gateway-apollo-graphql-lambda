@@ -4,11 +4,20 @@ const resolvers = require('./resolvers')
 
 const server = new ApolloServer({
     typeDefs,
-    resolvers
+    resolvers,
+    // playground: {
+    //     endpoint: "/dev/graphql"
+    // }
 })
 
-exports.handler = server.createHandler()
-
+exports.handler = server.createHandler({
+    // enable CORS
+    // ref) https://www.apollographql.com/docs/apollo-server/deployment/lambda/
+    cors: {
+        origin: '*',
+        credentials: true
+    }
+})
 
 /*
 exports.handler = async (event, context, callback) => {
