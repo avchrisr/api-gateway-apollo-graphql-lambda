@@ -1,6 +1,14 @@
 # API Gateway w/ Apollo GraphQL server (Lambda)
 https://www.freecodecamp.org/news/how-to-build-and-deploy-graphql-server-in-aws-lambda-using-nodejs-and-cloudformation/
 
+# Architecture
+Aurora RDS Provisioned (i.e. Non-Serverless) + RDS Proxy
+
+## For connecting to RDS from local, need to do port forwarding
+```
+ssh -i <private-key> ubuntu@xx.xx.xx.xx -L 15432:<rds-proxy-endpoint-uri>:5432
+```
+
 # Lesson Learned
 - SAM local start-api does NOT support lambdas deployed from an S3 location (zip), with following error:
 ```
