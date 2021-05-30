@@ -5,12 +5,15 @@ const { pgConnOptions } = require('../config/pg-conn')
 
 Cursor.prototype.readAsync = promisify(Cursor.prototype.read)
 
+const getNextSequenceNumber = async (client) => {
+    const result = await client.query(`SELECT nextval('sequence_number')`)
+    return parseInt(result.rows[0].nextval)
+}
+
 const executeDbQuery = async (queryText, queryParams = []) => {
     const pool = new Pool(pgConnOptions)
     const client = await pool.connect()
     let cursor
-
-    console.log(queryText)
 
     try {
         // --- using a simple query
@@ -25,7 +28,7 @@ const executeDbQuery = async (queryText, queryParams = []) => {
         let rows = await cursor.readAsync(rowCount)
 
         while (rows.length > 0) {
-            data = [...data, ...rows]
+            data = [...data, ...rows.map(row => row.data)]
             rows = await cursor.readAsync(rowCount)
         }
 
@@ -48,30 +51,36 @@ const executeDbQuery = async (queryText, queryParams = []) => {
     }
 }
 
-const executeDbTransaction = async () => {
+
+const beginTransaction = async (client) => {
+    await client.query('BEGIN')
+}
+
+const commitTransaction = async (client) => {
+    await client.query('COMMIT')
+}
+
+const rollbackTransaction = async (client) => {
+    await client.query('ROLLBACK')
+}
+
+const executeDbTransaction = async (parent, args, context, info, handlerFn) => {
     const pool = new Pool(pgConnOptions)
     const client = await pool.connect()
 
     try {
-        await client.query('BEGIN')
+        await beginTransaction(client)
 
-        // const queryText = 'INSERT INTO users(name, email) VALUES($1, $2) RETURNING id'
-        // const queryParams = ['brianc', 'brian.m.carlson@gmail.com']
-        // const result = await client.query(queryText, queryParams)
+        const result = await handlerFn(client, args)
 
-        // const insertPhotoText = 'INSERT INTO photos(user_id, photo_url) VALUES ($1, $2)'
-        // const insertPhotoValues = [res.rows[0].id, 's3.bucket.foo']
-        // await client.query(insertPhotoText, insertPhotoValues)
-
-        await client.query('COMMIT')
+        await commitTransaction(client)
 
         return {
             success: true,
-            data: 'inserted object data'
+            data: result
         }
-
     } catch (e) {
-        await client.query('ROLLBACK')
+        await rollbackTransaction(client)
         throw e
     } finally {
         client.release()
@@ -80,6 +89,10 @@ const executeDbTransaction = async () => {
 }
 
 module.exports = {
+    beginTransaction,
+    commitTransaction,
+    rollbackTransaction,
+    getNextSequenceNumber,
     executeDbQuery,
     executeDbTransaction
 }
