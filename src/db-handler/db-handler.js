@@ -1,21 +1,49 @@
+const { promisify } = require('util')
 const { Pool } = require('pg')
+const Cursor = require('pg-cursor')
 const { pgConnOptions } = require('../config/pg-conn')
+
+Cursor.prototype.readAsync = promisify(Cursor.prototype.read)
 
 const executeDbQuery = async (queryText, queryParams = []) => {
     const pool = new Pool(pgConnOptions)
+    const client = await pool.connect()
+    let cursor
+
+    console.log(queryText)
 
     try {
-        const result = await pool.query(queryText, queryParams)
+        // --- using a simple query
+        // const result = await pool.query(queryText, queryParams)
+        // const data = result.rows.map(row => row.data)
+
+        // --- using a cursor to stream-read large data
+        let data = []
+        cursor = client.query(new Cursor(queryText, queryParams))
+
+        const rowCount = 1000
+        let rows = await cursor.readAsync(rowCount)
+
+        while (rows.length > 0) {
+            data = [...data, ...rows]
+            rows = await cursor.readAsync(rowCount)
+        }
+
+        // TODO: streaming response data
 
         return {
             success: true,
-            totalCount: result.rowCount,
-            data: result.rows.map(row => row.data)
+            totalCount: data.length,
+            data
         }
     } catch (e) {
         console.error(e)
         throw e
     } finally {
+        if (cursor) {
+            cursor.close()
+        }
+        client.release()
         await pool.end()
     }
 }

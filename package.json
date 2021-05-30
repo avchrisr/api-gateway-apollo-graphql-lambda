@@ -12,6 +12,7 @@
     "dependencies": {
         "apollo-server-lambda": "^2.24.0",
         "graphql": "^15.5.0",
-        "pg": "^8.6.0"
+        "pg": "^8.6.0",
+        "pg-cursor": "^2.6.0"
     }
 }
