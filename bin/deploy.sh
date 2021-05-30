@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # USAGE
-# MY_AWS_ACCESS_KEY_ID=xxxxxxxxx MY_AWS_SECRET_ACCESS_KEY=xxxxxxxxx S3_BUCKET=cr-test-lambda-deploy-graphql ./bin/deploy.sh
+# MY_AWS_ACCESS_KEY_ID=xxxxx MY_AWS_SECRET_ACCESS_KEY=xxxxx PGPASSWORD=xxxxx S3_BUCKET=cr-test-lambda-deploy-graphql ./bin/deploy.sh
 
 set -euo pipefail
 
@@ -13,6 +13,10 @@ STACK_NAME=cr-test-api-gateway-apollo-graphql-lambda
 MY_AWS_REGION=us-west-2
 RDS_RESOURCE_ARN=arn:aws:rds:us-west-2:022629765845:cluster:cr-test-aurora-pg-serverless-1
 RDS_SECRETS_MANAGER_ARN=arn:aws:secretsmanager:us-west-2:022629765845:secret:cr-test-aurora-pg-serverless-1-secret-MDnx21
+PGHOST=cr-test-aurora-pg-provisioned-2-proxy.proxy-cg4dgtw3y7qa.us-west-2.rds.amazonaws.com
+PGPORT=5432
+PGUSER=postgres
+PGDATABASE=crtest
 
 cd $ROOT_DIR
 
@@ -39,6 +43,11 @@ aws cloudformation deploy --region us-west-2 \
   AwsSecretAccessKey=$MY_AWS_SECRET_ACCESS_KEY \
   RdsSecretsManagerArn=$RDS_SECRETS_MANAGER_ARN \
   RdsResourceArn=$RDS_RESOURCE_ARN \
+  PGHOST=$PGHOST \
+  PGPORT=$PGPORT \
+  PGUSER=$PGUSER \
+  PGPASSWORD=$PGPASSWORD \
+  PGDATABASE=$PGDATABASE \
   --capabilities CAPABILITY_NAMED_IAM
 
 # Get the api url from output of cloudformation stack

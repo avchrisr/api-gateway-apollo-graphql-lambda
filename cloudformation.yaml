@@ -1,8 +1,11 @@
 #
 # CAVEAT
 # -----------
-# when API Gateway is changed, you need to MANUALLY DEPLOY the updated API in AWS Console
-#   because since the stage name is the same, CloudFormation sees it as no changes made and will not automatically deploy
+# - when API Gateway is changed, you need to MANUALLY DEPLOY the updated API in AWS Console
+#     because since the stage name is the same, CloudFormation sees it as no changes made and will not automatically deploy
+#
+# - to use RDS or RDS Proxy, lambda must be in the same VPC as the RDS or RDS Proxy.
+#   - lambda does not need to be in any VPC if querying Serverless RDS.
 #
 # ref)
 # https://www.freecodecamp.org/news/how-to-build-and-deploy-graphql-server-in-aws-lambda-using-nodejs-and-cloudformation/
@@ -24,10 +27,15 @@
 #   BucketName=cr-test-lambda-deploy-graphql \
 #   Version=latest \
 #	AwsRegion=us-west-2 \
-#	AwsAccessKeyId=XXXXXXXXXXXXX \
-#	AwsSecretAccessKey=xxxxxxxxxxxxxx \
+#	AwsAccessKeyId=xxxxx \
+#	AwsSecretAccessKey=xxxxx \
 #	RdsSecretsManagerArn=arn:aws:secretsmanager:us-west-2:022629765845:secret:cr-test-aurora-pg-serverless-1-secret-MDnx21 \
 #	RdsResourceArn=arn:aws:rds:us-west-2:022629765845:cluster:cr-test-aurora-pg-serverless-1 \
+#	PGHOST=<rds-proxy>|<rds> \
+#	PGPORT=5432 \
+#	PGUSER=xxxxx \
+#	PGPASSWORD=xxxxx \
+#	PGDATABASE=crtest \
 #   --capabilities CAPABILITY_NAMED_IAM
 #
 
@@ -60,6 +68,23 @@ Parameters:
     RdsResourceArn:
         Type: String
         Description: RDS ARN
+    PGHOST:
+        Type: String
+        Description: RDS Endpoint. This may be an RDS Proxy.
+    PGPORT:
+        Type: String
+        Description: RDS Port
+        Default: "5432"
+    PGUSER:
+        Type: String
+        Description: RDS Username
+    PGPASSWORD:
+        Type: String
+        Description: RDS Password
+        NoEcho: true
+    PGDATABASE:
+        Type: String
+        Description: RDS Database Name
 
 Resources:
     # --------  Lambda function and Permission and Role  ---------
@@ -88,6 +113,12 @@ Resources:
                                 - logs:CreateLogGroup
                                 - logs:CreateLogStream
                                 - logs:PutLogEvents
+                                # ec2-permissions are needed if deploying Lambda in a VPC
+                                - ec2:DescribeNetworkInterfaces
+                                - ec2:CreateNetworkInterface
+                                - ec2:DeleteNetworkInterface
+                                - ec2:DescribeInstances
+                                - ec2:AttachNetworkInterface
                             Resource: "*"
                         ## verified that RDS and SecretsManager Allow policy were not needed. It still returned data from Serverless RDS.
                         #   - Effect: Allow
@@ -117,15 +148,27 @@ Resources:
                     MY_AWS_SECRET_ACCESS_KEY: !Ref AwsSecretAccessKey
                     RDS_SECRETS_MANAGER_ARN: !Ref RdsSecretsManagerArn
                     RDS_RESOURCE_ARN: !Ref RdsResourceArn
+                    PGHOST: !Ref PGHOST
+                    PGPORT: !Ref PGPORT
+                    PGUSER: !Ref PGUSER
+                    PGPASSWORD: !Ref PGPASSWORD
+                    PGDATABASE: !Ref PGDATABASE
             Code:
                 S3Bucket: !Ref BucketName
                 S3Key: !Sub dist-${Version}.zip
             Handler: src/index.handler
             Description: GraphQL Apollo Server
-            MemorySize: 128 # 128 by default if omitted.
+            MemorySize: 256 # 128 by default if omitted.
             Role: !GetAtt LambdaExecutionRole.Arn
             Runtime: nodejs14.x
-            Timeout: 10
+            Timeout: 15
+            VpcConfig:
+                SecurityGroupIds:
+                    - "sg-0e17bccfd9744732c" # rds-pg-sg
+                SubnetIds:
+                    - "subnet-0757b641ebd5d449f"    # everguard-vpc-2-private-subnet-1 (us-west-2a)
+                    - "subnet-0c4fdec2d1fe66b2a"    # everguard-vpc-2-private-subnet-2 (us-west-2b)
+                    - "subnet-0277e542e5d6b63c5"    # everguard-vpc-2-private-subnet-3 (us-west-2c)
 
     GraphQLApi:
         Type: "AWS::ApiGateway::RestApi"
