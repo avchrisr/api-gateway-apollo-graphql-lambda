@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const { promisify } = require('util')
 const { Pool } = require('pg')
 const Cursor = require('pg-cursor')
@@ -10,15 +11,36 @@ const getNextSequenceNumber = async (client) => {
     return parseInt(result.rows[0].nextval)
 }
 
-const executeDbQuery = async (queryText, queryParams = []) => {
+const executeDbQuery = async (args, queryText, queryParams = []) => {
+
+    console.log(`args =`, args)
+    console.log(`queryText =`, queryText)
+    console.log(`queryParams =`, queryParams)
+
     const pool = new Pool(pgConnOptions)
     const client = await pool.connect()
     let cursor
 
     try {
-        // --- using a simple query
-        // const result = await pool.query(queryText, queryParams)
-        // const data = result.rows.map(row => row.data)
+        // Get Total Count
+        // ----------------
+        const totalCountQueryText = queryText.replace(/SELECT data FROM/i, 'SELECT COUNT(data) FROM')
+        console.log(`totalCountQueryText =`, totalCountQueryText)
+
+        // --- using a simple query. (using client.query should also be fine)
+        const result = await pool.query(totalCountQueryText, queryParams)
+        const totalCount = parseInt(_.get(result, 'rows[0].count', 0))
+
+        // Common Filter handling
+        const page = parseInt(_.get(args, 'commonFilter.page', 1))
+        const limit = parseInt(_.get(args, 'commonFilter.limit', 100))
+        const startIndex = (page - 1) * limit
+        const endIndex = page * limit
+
+        queryParams.push(limit)
+        queryText += ` LIMIT $${queryParams.length}`
+        queryParams.push(startIndex)
+        queryText += ` OFFSET $${queryParams.length}`
 
         // --- using a cursor to stream-read large data
         let data = []
@@ -32,11 +54,29 @@ const executeDbQuery = async (queryText, queryParams = []) => {
             rows = await cursor.readAsync(rowCount)
         }
 
+        // Pagination result
+        const pagination = {}
+        if (endIndex < totalCount) {
+            pagination.next = {
+                page: page + 1,
+                limit
+            }
+        }
+        if (startIndex > 0) {
+            pagination.prev = {
+                page: page - 1,
+                limit
+            }
+        }
+
+
         // TODO: streaming response data
 
         return {
             success: true,
-            totalCount: data.length,
+            totalCount,
+            count: data.length,
+            pagination,
             data
         }
     } catch (e) {

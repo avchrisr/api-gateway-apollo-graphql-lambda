@@ -12,17 +12,44 @@ const typeDefs = gql`
     Query
     """
     type Query {
+        me: User
         getUser: User
         getUserById(id: Int!): User
         getBookById(id: Int!): Book
-        getBooks: SearchBooksResponse
+        getBooks(filter: BookFilter, commonFilter: CommonFilter = {page: 1, limit: 100}): SearchBooksResponse
         recommendedVideos(first: Int = 10): [Video!]!
+    }
+
+    # limit (pageSize), pageNumber, sort
+    input CommonFilter {
+        page: Int
+        limit: Int
+    }
+
+    input BookFilter {
+        id: ID
+        title: String
+        genres: String
+        authors: String
+        published: Boolean
     }
 
     type SearchBooksResponse {
         success: Boolean!
-        totalCount: Int
+        totalCount: Int!
+        count: Int!
+        pagination: Pagination
         data: [Book!]!
+    }
+
+    type Pagination {
+        prev: PaginationLimit
+        next: PaginationLimit
+    }
+
+    type PaginationLimit {
+        page: Int!
+        limit: Int!
     }
 
     type User {
@@ -153,7 +180,7 @@ const typeDefs = gql`
     type Mutation {
         # addBook(title: String!, author: String): Book
         addBook(input: BookInput): Book
-        updateBook(id: Int!, input: BookInput): Book
+        updateBookById(id: Int!, input: BookInput): Book
     }
 
     # media can be book OR video

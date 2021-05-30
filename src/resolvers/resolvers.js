@@ -2,17 +2,16 @@
 const { executeDbTransaction } = require('../db/db-handler')
 
 const { getBooks, getBookById } = require('./query/books')
-const { addBook } = require('./mutation/books')
+const { addBook, updateBookById } = require('./mutation/books')
 
 const resolvers = {
     Query: {
         getUser: (parent, args, context, info) => ({ id: 123, firstname: 'John', lastname: 'Doe', email: 'j.doe.test@example.com', company: 'Everguard', isEnabled: true }),
         getBooks: async (parent, args, context, info) => {
-
             console.log('-----   query getBooks args   -----')
             console.log(JSON.stringify(args, null, 4))
 
-            const result = await getBooks()
+            const result = await getBooks(args)
             return result
         },
         getBookById: async (parent, args, context, info) => {
@@ -31,6 +30,13 @@ const resolvers = {
             console.log(JSON.stringify(args, null, 4))
 
             await executeDbTransaction(parent, args, context, info, addBook)
+        },
+        updateBookById: async (parent, args, context, info) => {
+
+            console.log('-----   mutation updateBookById args   -----')
+            console.log(JSON.stringify(args, null, 4))
+
+            await executeDbTransaction(parent, args, context, info, updateBookById)
         }
     }
 }
