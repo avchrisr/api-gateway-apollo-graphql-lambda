@@ -167,6 +167,15 @@ const typeDefs = gql`
         X_LARGE
     }
 
+    """
+    Mutation
+    """
+    type Mutation {
+        # addBook(title: String!, author: String): Book
+        addBook(input: BookInput): Book
+        updateBookById(id: Int!, input: BookInput): UpdateBookByIdResponse
+    }
+
     input BookInput {
         title: String!
         authors: [String!]
@@ -174,13 +183,9 @@ const typeDefs = gql`
         published: Boolean
     }
 
-    """
-    Mutation
-    """
-    type Mutation {
-        # addBook(title: String!, author: String): Book
-        addBook(input: BookInput): Book
-        updateBookById(id: Int!, input: BookInput): Book
+    type UpdateBookByIdResponse {
+        success: Boolean!
+        data: Book!
     }
 
     # media can be book OR video

@@ -1,6 +1,4 @@
-// TODO: need to init db here, and create initial wrapper for DB transaction for UPSERT
 const { executeDbTransaction } = require('../db/db-handler')
-
 const { getBooks, getBookById } = require('./query/books')
 const { addBook, updateBookById } = require('./mutation/books')
 
@@ -8,35 +6,18 @@ const resolvers = {
     Query: {
         getUser: (parent, args, context, info) => ({ id: 123, firstname: 'John', lastname: 'Doe', email: 'j.doe.test@example.com', company: 'Everguard', isEnabled: true }),
         getBooks: async (parent, args, context, info) => {
-            console.log('-----   query getBooks args   -----')
-            console.log(JSON.stringify(args, null, 4))
-
-            const result = await getBooks(args)
-            return result
+            return await getBooks(args)
         },
         getBookById: async (parent, args, context, info) => {
-
-            console.log('-----   query getBookById args   -----')
-            console.log(JSON.stringify(args, null, 4))
-
-            const result = await getBookById(args.id)
-            return result
+            return await getBookById(args.id)
         }
     },
     Mutation: {
         addBook: async (parent, args, context, info) => {
-
-            console.log('-----   mutation addBook args   -----')
-            console.log(JSON.stringify(args, null, 4))
-
-            await executeDbTransaction(parent, args, context, info, addBook)
+            return await executeDbTransaction(parent, args, context, info, addBook)
         },
         updateBookById: async (parent, args, context, info) => {
-
-            console.log('-----   mutation updateBookById args   -----')
-            console.log(JSON.stringify(args, null, 4))
-
-            await executeDbTransaction(parent, args, context, info, updateBookById)
+            return await executeDbTransaction(parent, args, context, info, updateBookById)
         }
     }
 }

@@ -1,5 +1,9 @@
-
-// TODO: for Mutation, it's returning null. check why.
+// ------------------------------
+// Apollo GraphQL Error Handling
+// ------------------------------
+// unless it's a network or schema validation error, if error occurs during resolver,
+//   apollo graphql still sends a 200 OK response with error stacktrace in response, and possibly partial data.
+// ref) https://www.apollographql.com/docs/react/data/error-handling
 
 const { ApolloError, UserInputError } = require('apollo-server-lambda')
 
@@ -44,11 +48,9 @@ const updateBookById = async (client, args) => {
     let result = await client.query(queryText, queryParams)
 
     if (result.rows.length === 0) {
-        throw new UserInputError(`Book not found with id = ${id}`)
-
-        // throw new ApolloError(`Book not found with id = ${id}`, 'CHRIS_ERROR_CODE')
-
-        // throw new Error(`Book not found with id = ${id}`)
+        throw new UserInputError(`Book not found with id = ${id}`)                      // BAD_USER_INPUT
+        // throw new ApolloError(`Book not found with id = ${id}`, 'CHRIS_ERROR_CODE')  // CHRIS_ERROR_CODE
+        // throw new Error(`Book not found with id = ${id}`)                            // INTERNAL_SERVER_ERROR
     }
 
     const source = result.rows[0].data
