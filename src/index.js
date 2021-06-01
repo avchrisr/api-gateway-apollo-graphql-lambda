@@ -1,5 +1,12 @@
 const { ApolloServer, AuthenticationError } = require('apollo-server-lambda')
-const typeDefs = require('./schema/schema')
+const { mergeTypeDefs } = require('@graphql-tools/merge')
+const { print } = require('graphql')
+
+const bookTypeDefs = require('./schema/book')
+const userTypeDefs = require('./schema/user')
+const typeDefs = mergeTypeDefs([bookTypeDefs, userTypeDefs])        // automatically de-dups duplicates if exist
+// console.log(print(typeDefs))
+
 const resolvers = require('./resolvers/resolvers')
 
 const server = new ApolloServer({
