@@ -1,0 +1,97 @@
+
+{
+    "defaultEnv": {
+        "ENV": "NODE_ENV"
+    },
+    "local": {
+        "driver": "pg",
+        "user": {
+            "ENV": "LOCAL_PG_USER"
+        },
+        "password": {
+            "ENV": "LOCAL_PG_PASS"
+        },
+        "host": {
+            "ENV": "LOCAL_PG_HOST"
+        },
+        "database": {
+            "ENV": "LOCAL_PG_DB"
+        },
+        "port": 5432,
+        "ssl": false,
+        "schema": "public"
+    },
+    "development": {
+        "driver": "pg",
+        "user": {
+            "ENV": "DEV_PG_USER"
+        },
+        "password": {
+            "ENV": "DEV_PG_PASS"
+        },
+        "host": {
+            "ENV": "DEV_PG_HOST"
+        },
+        "database": {
+            "ENV": "DEV_PG_DB"
+        },
+        "port": 5432,
+        "ssl": true,
+        "schema": "public"
+    },
+    "staging": {
+        "driver": "pg",
+        "user": {
+            "ENV": "STG_PG_USER"
+        },
+        "password": {
+            "ENV": "STG_PG_PASS"
+        },
+        "host": {
+            "ENV": "STG_PG_HOST"
+        },
+        "database": {
+            "ENV": "STG_PG_DB"
+        },
+        "port": 5432,
+        "ssl": true,
+        "schema": "public"
+    },
+    "demo": {
+        "driver": "pg",
+        "user": {
+            "ENV": "DEMO_PG_USER"
+        },
+        "password": {
+            "ENV": "DEMO_PG_PASS"
+        },
+        "host": {
+            "ENV": "DEMO_PG_HOST"
+        },
+        "database": {
+            "ENV": "DEMO_PG_DB"
+        },
+        "port": 5432,
+        "ssl": true,
+        "schema": "public"
+    },
+    "production": {
+        "driver": "pg",
+        "user": {
+            "ENV": "PROD_PG_USER"
+        },
+        "password": {
+            "ENV": "PROD_PG_PASS"
+        },
+        "host": {
+            "ENV": "PROD_PG_HOST"
+        },
+        "database": {
+            "ENV": "PROD_PG_DB"
+        },
+        "port": 5432,
+        "ssl": true,
+        "schema": "public"
+    },
+    "sql-file": true
+}
