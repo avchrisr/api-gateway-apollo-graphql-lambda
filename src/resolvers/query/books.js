@@ -4,43 +4,64 @@ const { executeDbQuery } = require('../../db/db-handler')
 const getBooks = async (args) => {
 
     // filter, commonFilter
+    let selectQuery = `SELECT data FROM book`
+    let whereQuery = ''
+    let orderByQuery = ''
+    let limitQuery = ''
 
-    let queryText = `SELECT data FROM cr_test_table1`
     const queryParams = []
 
     if (_.isPlainObject(args.filter)) {
         Object.keys(args.filter).forEach(key => {
             if (!_.isNil(key)) {
                 if (queryParams.length === 0) {
-                    queryText += ` WHERE`
+                    whereQuery += `WHERE`
                 } else {
-                    queryText += ` AND`
+                    whereQuery += ` AND`
                 }
 
                 if (['title', 'genres', 'authors'].includes(key)) {
                     queryParams.push(`%${args.filter[key]}%`)
-                    queryText += ` data->>'${key}' ILIKE $${queryParams.length}`
+                    whereQuery += ` data->>'${key}' ILIKE $${queryParams.length}`
                 } else {
                     queryParams.push(args.filter[key])
-                    queryText += ` data->>'${key}' = $${queryParams.length}`
+                    whereQuery += ` data->>'${key}' = $${queryParams.length}`
                 }
             }
         })
     }
 
-    const result = await executeDbQuery(args, queryText, queryParams)
+    const query = {
+        selectQuery,
+        whereQuery,
+        orderByQuery,
+        limitQuery
+    }
 
-    console.log('--------   getBooks result   -------')
-    console.log(JSON.stringify(result, null, 4))
+    const result = await executeDbQuery(args, query, queryParams)
+
+    // console.log('--------   getBooks result   -------')
+    // console.log(JSON.stringify(result, null, 4))
 
     return result
 }
 
 const getBookById = async (id) => {
-    const queryText = `SELECT data FROM cr_test_table1 WHERE data->'id' = $1`
+    let selectQuery = `SELECT data FROM book`
+    let whereQuery = `WHERE data->'id' = $1`
+    let orderByQuery = ''
+    let limitQuery = ''
+
     const queryParams = [id]
 
-    const result = await executeDbQuery(queryText, queryParams)
+    const query = {
+        selectQuery,
+        whereQuery,
+        orderByQuery,
+        limitQuery
+    }
+
+    const result = await executeDbQuery(query, queryParams)
 
     console.log(`--------   getBookById result | id = ${id}   -------`)
     console.log(JSON.stringify(result, null, 4))

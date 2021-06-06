@@ -27,7 +27,7 @@ const addBook = async (client, args) => {
     // const insertPhotoValues = [res.rows[0].id, 's3.bucket.foo']
     // await client.query(insertPhotoText, insertPhotoValues)
 
-    const queryText = `INSERT INTO cr_test_table1 (data) VALUES ($1)`
+    const queryText = `INSERT INTO book (data) VALUES ($1)`
     const queryParams = [input]     // input does NOT need to be stringified since data column type is jsonb, not json (string)
 
     await client.query(queryText, queryParams)
@@ -43,7 +43,7 @@ const updateBookById = async (client, args) => {
     const input = args.input
 
     // merge JSON
-    let queryText = `SELECT data FROM cr_test_table1 WHERE data->'id' = $1`
+    let queryText = `SELECT data FROM book WHERE data->'id' = $1`
     let queryParams = [id]
     let result = await client.query(queryText, queryParams)
 
@@ -56,7 +56,7 @@ const updateBookById = async (client, args) => {
     const source = result.rows[0].data
     const target = jsonmergepatch.apply(source, input)
 
-    queryText = `UPDATE cr_test_table1 SET data = $1 WHERE data->'id' = $2`
+    queryText = `UPDATE book SET data = $1 WHERE data->'id' = $2`
     queryParams = [target, id]
 
     await client.query(queryText, queryParams)

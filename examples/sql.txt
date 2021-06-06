@@ -6,8 +6,8 @@ CREATE SEQUENCE sequence_number MINVALUE 1;
 // ---------------------------------------------
 // create table & index
 // ---------------------------------------------
-CREATE TABLE cr_test_table1 ( data jsonb );
-CREATE UNIQUE INDEX cr_test_table1_primary_key ON cr_test_table1 USING BTREE (((data->>'id')::BIGINT));
+CREATE TABLE book ( data jsonb );
+CREATE UNIQUE INDEX book_primary_key ON book USING BTREE (((data->>'id')::BIGINT));
 
 CREATE TABLE user ( data jsonb );
 CREATE UNIQUE INDEX user_primary_key ON user USING BTREE (((data->>'id')::BIGINT));
@@ -18,11 +18,11 @@ CREATE UNIQUE INDEX video_primary_key ON video USING BTREE (((data->>'id')::BIGI
 // ---------------------------------------------
 // insert
 // ---------------------------------------------
-INSERT INTO cr_test_table1 (data) VALUES ('{"id": 1, "title": "Sleeping Beauties", "genres": ["Fiction", "Thriller", "Horror"], "published": false}');
-INSERT INTO cr_test_table1 (data) VALUES ('{"id": 2, "title": "Influence", "genres": ["Marketing & Sales", "Self-Help ", "Psychology"], "published": true}');
-INSERT INTO cr_test_table1 (data) VALUES ('{"id": 3, "title": "The Dictator''s Handbook", "genres": ["Law", "Politics"], "authors": ["Bruce Bueno de Mesquita", "Alastair Smith"], "published": true}');
-INSERT INTO cr_test_table1 (data) VALUES ('{"id": 4, "title": "Deep Work", "genres": ["Productivity", "Reference"], "published": true}');
-INSERT INTO cr_test_table1 (data) VALUES ('{"id": 5, "title": "Siddhartha", "genres": ["Fiction", "Spirituality"], "published": true}');
+INSERT INTO book (data) VALUES ('{"id": 1, "title": "Sleeping Beauties", "genres": ["Fiction", "Thriller", "Horror"], "published": false}');
+INSERT INTO book (data) VALUES ('{"id": 2, "title": "Influence", "genres": ["Marketing & Sales", "Self-Help ", "Psychology"], "published": true}');
+INSERT INTO book (data) VALUES ('{"id": 3, "title": "The Dictator''s Handbook", "genres": ["Law", "Politics"], "authors": ["Bruce Bueno de Mesquita", "Alastair Smith"], "published": true}');
+INSERT INTO book (data) VALUES ('{"id": 4, "title": "Deep Work", "genres": ["Productivity", "Reference"], "published": true}');
+INSERT INTO book (data) VALUES ('{"id": 5, "title": "Siddhartha", "genres": ["Fiction", "Spirituality"], "published": true}');
 
 INSERT INTO user (data) VALUES ('{"id": 5, "firstname": "Chris", "lastname": "Ro", "email": "cr.test@everguard.ai", "isEnabled": true}, "cognitoId": "a1087907-cb94-4d90-ad7f-dcd6d5717fdc"');
 INSERT INTO user (data) VALUES ('{"id": 5, "firstname": "Chris", "lastname": "Ro", "email": "cr.test@everguard.ai", "isEnabled": true}, "cognitoId": "d3063d07-ed80-457f-b925-70fabc70223d"');
@@ -31,17 +31,30 @@ INSERT INTO user (data) VALUES ('{"id": 5, "firstname": "Chris", "lastname": "Ro
 // ---------------------------------------------
 // query
 // ---------------------------------------------
-SELECT * FROM cr_test_table1;
-SELECT data->'title' FROM cr_test_table1;
-SELECT data->'title' FROM cr_test_table1 WHERE data->'published' = 'false';
-SELECT data->'title' FROM cr_test_table1 WHERE data->'genres' @> '["Fiction", "Horror"]'::jsonb;
-SELECT COUNT(*) FROM cr_test_table1 WHERE data ? 'authors';                                             // check existence
+SELECT * FROM book;
+SELECT data->'title' FROM book;
+SELECT data->'title' FROM book WHERE data->'published' = 'false';
+SELECT data->'title' FROM book WHERE data->'genres' @> '["Fiction", "Horror"]'::jsonb;
+SELECT COUNT(*) FROM book WHERE data ? 'authors';                                             // check existence
 
 
 
 
 ------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------
+
+
+UPDATE patient_aggregate SET data = jsonb_set(data, '{__protectedData}', data::jsonb, true) WHERE data->>'__protectedData' IS NULL;
+
+--application_settings
+UPDATE application_settings SET data = jsonb_set(data, '{maximumPasswordAge}', '90'::jsonb, true) WHERE data->>'maximumPasswordAge' IS NULL;
+
+--user_setting
+UPDATE user_setting SET data = jsonb_set(data, '{passwordExpirationExempt}', 'false'::jsonb, true) WHERE data->>'passwordExpirationExempt' IS NULL;
+
+UPDATE data_source SET data = jsonb_set(data, '{isProtectedDataSource}', 'false'::jsonb, true) WHERE data->>'isProtectedDataSource' IS NULL;
+
+
 
 ---------------------------------------------
 -- system relations
@@ -55,9 +68,9 @@ CREATE SEQUENCE sequence_number MINVALUE 1;
 -- Tables
 ---------------------------------------------
 
--- cr_test_table1
-CREATE TABLE cr_test_table1 ( data jsonb );
-CREATE UNIQUE INDEX cr_test_table1_primary_key ON cr_test_table1 USING BTREE (((data->>'id')::BIGINT));
+-- book
+CREATE TABLE book ( data jsonb );
+CREATE UNIQUE INDEX book_primary_key ON book USING BTREE (((data->>'id')::BIGINT));
 
 -- -- local_patient_local_provider_clinical_item
 -- CREATE TABLE local_patient_local_provider_clinical_item ( data jsonb );

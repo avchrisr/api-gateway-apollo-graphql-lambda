@@ -20,8 +20,8 @@ const resolvers = {
     Query: {
         getUser: (parent, args, context, info) => ({ id: 123, name: 'John Doe', company: 'Everguard' }),
         getBooks: async (parent, args, context, info) => {
-            const sql = `SELECT * FROM cr_test_table1`
-            // const sql = `SELECT data->'title' FROM cr_test_table1 WHERE data->'published' = 'false'`
+            const sql = `SELECT * FROM book`
+            // const sql = `SELECT data->'title' FROM book WHERE data->'published' = 'false'`
 
             const sqlParams = {
                 resourceArn: RDS_RESOURCE_ARN,          // serverless aurora rds

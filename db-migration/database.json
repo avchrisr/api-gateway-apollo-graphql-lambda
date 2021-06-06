@@ -17,8 +17,10 @@
         "database": {
             "ENV": "LOCAL_PG_DB"
         },
-        "port": 5432,
-        "ssl": false,
+        "port": 15432,
+        "ssl": {
+            "rejectUnauthorized": false
+        },
         "schema": "public"
     },
     "development": {

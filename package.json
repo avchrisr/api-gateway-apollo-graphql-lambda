@@ -19,5 +19,8 @@
         "lodash": "^4.17.21",
         "pg": "^8.6.0",
         "pg-cursor": "^2.6.0"
+    },
+    "devDependencies": {
+        "faker": "^5.5.3"
     }
 }

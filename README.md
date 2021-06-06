@@ -4,7 +4,7 @@ https://www.freecodecamp.org/news/how-to-build-and-deploy-graphql-server-in-aws-
 # Architecture
 Aurora RDS Provisioned (i.e. Non-Serverless) + RDS Proxy
 
-## For connecting to RDS from local, need to do port forwarding
+## For connecting to RDS or RDS Proxy from local, need to do port forwarding
 ```
 ssh -i <private-key> ubuntu@xx.xx.xx.xx -L 15432:<rds-proxy-endpoint-uri>:5432
 ```
