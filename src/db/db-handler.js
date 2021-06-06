@@ -75,6 +75,7 @@ const executeDbQuery = async (args, {
         )
         SELECT data from this_set ORDER BY data->'id' ASC
         */
+
         if (!_.isNil(after)) {
             // TODO: decode it first
             const decodedCursorValue = parseInt(after)

@@ -1,6 +1,11 @@
 // USAGE
 // $ PGPASSWORD=xxxxx node db-data-loader.js
 
+const PGPASSWORD = process.env.PGPASSWORD
+if (!PGPASSWORD) {
+    throw new Error('PGPASSWORD env var is required.')
+}
+
 const { Pool } = require('pg')
 const { pgConnOptions } = require('../config/pg-conn')
 const { generateBook } = require('./data-generator')
@@ -41,6 +46,7 @@ const execute = async () => {
 const insertBook = async (client) => {
     const book = generateBook()
     book.id = await getNextSequenceNumber(client)
+    book.updated = new Date(Date.now())
 
     const queryText = `INSERT INTO book (data) VALUES ($1)`
     const queryParams = [book]     // input does NOT need to be stringified since data column type is jsonb, not json (string)

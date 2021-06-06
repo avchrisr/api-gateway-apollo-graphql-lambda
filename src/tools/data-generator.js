@@ -8,14 +8,15 @@ const faker = require('faker')
 function generateBook() {
     const genreCount = faker.datatype.number({ min: 0, max: 5 })
     const genres = []
-    for (let i=0; i < genreCount; i++) {
+    for (let i = 0; i < genreCount; i++) {
         genres.push(faker.commerce.product())
     }
 
     const authorCount = faker.datatype.number({ min: 1, max: 3 })
     const authors = []
-    for (let i=0; i < authorCount; i++) {
-        authors.push(faker.name.findName())
+    for (let i = 0; i < authorCount; i++) {
+        // authors.push(faker.name.findName())
+        authors.push(generatePerson())
     }
 
     return {
@@ -24,6 +25,33 @@ function generateBook() {
         genres,
         authors,
         published: faker.datatype.boolean()
+    }
+}
+
+function generatePerson() {
+    const firstname = faker.name.firstName()
+    const lastname = faker.name.lastName()
+    const dob = faker.date.between('1980-01-01', '2010-12-31')
+    // const dob = new Date(faker.date.between('1980-01-01', '2010-12-31'))
+    // const dob = new Date(faker.date.between('1980-01-01', '2010-12-31')).getTime()
+
+    return {
+        // username: faker.internet.userName().substring(0, 20),
+        firstname,
+        lastname,
+        dob,
+        email: `${firstname.replace(/[^\w]/g, '')}.${lastname.replace(/[^\w]/g, '')}.test@everguard.ai`,
+        phoneNumber: '111-111-1111',
+        address: {
+            street1: faker.address.streetAddress(),
+            city: faker.address.city(),
+            state: faker.address.stateAbbr(),
+            zipCode: faker.address.zipCode('#####')
+            // countryCode: faker.address.countryCode()
+        },
+        company: faker.company.companyName()
+        // employeeId: faker.internet.password(),
+        // password: faker.internet.password() + 'Aa1'
     }
 }
 

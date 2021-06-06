@@ -85,6 +85,11 @@ const typeDefs = `
     # If an array has an exclamation point after it, the array cannot be null, but it _can_ be empty.
 
     """
+    Custom Scalars
+    """
+    scalar DateTime
+
+    """
     Query
     """
     type Query {
@@ -158,7 +163,20 @@ const typeDefs = `
         title: String!
         genres: [String!]
         published: Boolean
-        authors: [String!]
+        authors: [Person!]
+        updated: DateTime
+    }
+
+    type Person {
+        id: Int
+        firstname: String!
+        lastname: String!
+        dob: String
+        email: String!
+        company: String
+        address: Address
+        phoneNumber: String
+        updated: DateTime
     }
 
     # -- enum cannot be numeric value...
