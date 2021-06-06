@@ -8,14 +8,8 @@ const typeDefs = `
         me: User
         getUser: User
         getUserById(id: Int!): User
-        getUsers(filter: BookFilter, commonFilter: CommonFilter = {page: 1, limit: 100}): SearchUsersResponse
+        getUsers(filter: UserFilter): SearchUsersResponse
         recommendedVideos(first: Int = 10): [Video!]!
-    }
-
-    # limit (pageSize), pageNumber, sort
-    input CommonFilter {
-        page: Int
-        limit: Int
     }
 
     input UserFilter {

@@ -2,8 +2,6 @@ const _ = require('lodash')
 const { executeDbQuery } = require('../../db/db-handler')
 
 const getBooks = async (args) => {
-
-    // filter, commonFilter
     let selectQuery = `SELECT data FROM book`
     let whereQuery = ''
     let orderByQuery = ''
@@ -11,25 +9,24 @@ const getBooks = async (args) => {
 
     const queryParams = []
 
-    if (_.isPlainObject(args.filter)) {
-        Object.keys(args.filter).forEach(key => {
-            if (!_.isNil(key)) {
-                if (queryParams.length === 0) {
-                    whereQuery += `WHERE`
-                } else {
-                    whereQuery += ` AND`
-                }
-
-                if (['title', 'genres', 'authors'].includes(key)) {
-                    queryParams.push(`%${args.filter[key]}%`)
-                    whereQuery += ` data->>'${key}' ILIKE $${queryParams.length}`
-                } else {
-                    queryParams.push(args.filter[key])
-                    whereQuery += ` data->>'${key}' = $${queryParams.length}`
-                }
+    const filter = _.omit(args.filter ?? {}, 'commonFilter')
+    Object.keys(filter).forEach(key => {
+        if (!_.isNil(key)) {
+            if (queryParams.length === 0) {
+                whereQuery += `WHERE`
+            } else {
+                whereQuery += ` AND`
             }
-        })
-    }
+
+            if (['title', 'genres', 'authors'].includes(key)) {
+                queryParams.push(`%${filter[key]}%`)
+                whereQuery += ` data->>'${key}' ILIKE $${queryParams.length}`
+            } else {
+                queryParams.push(filter[key])
+                whereQuery += ` data->>'${key}' = $${queryParams.length}`
+            }
+        }
+    })
 
     const query = {
         selectQuery,

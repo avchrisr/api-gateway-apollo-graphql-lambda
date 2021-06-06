@@ -83,6 +83,7 @@ pageInfo {
 
 const typeDefs = `
     # If an array has an exclamation point after it, the array cannot be null, but it _can_ be empty.
+    # graphql does NOT allow input types to implement interfaces
 
     """
     Custom Scalars
@@ -94,7 +95,7 @@ const typeDefs = `
     """
     type Query {
         getBookById(id: Int!): Book
-        getBooks(filter: BookFilter, commonFilter: CommonFilter = {limit: 100}): SearchBooksResponse
+        getBooks(filter: BookFilter): SearchBooksResponse
     }
 
     type PageInfo {
@@ -133,6 +134,7 @@ const typeDefs = `
     }
 
     input BookFilter {
+        commonFilter: CommonFilter
         id: ID
         title: String
         genres: String

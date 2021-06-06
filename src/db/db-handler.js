@@ -26,8 +26,8 @@ const executeDbQuery = async (args, {
     limitQuery = ''
 }, queryParameters = []) => {
 
-    // console.log(`args =`, JSON.stringify(args, null, 4))
-    // console.log(`queryParameters =`, queryParameters)
+    console.log(`args =`, JSON.stringify(args, null, 4))
+    console.log(`queryParameters =`, queryParameters)
 
     const pool = new Pool(pgConnOptions)
     const client = await pool.connect()
@@ -36,16 +36,16 @@ const executeDbQuery = async (args, {
     const queryParams = [...queryParameters]
 
     try {
-        const sortOrder = _.get(args, 'commonFilter.sortOrder', SORT_ORDER.ASC)
+        const sortOrder = _.get(args, 'filter.commonFilter.sortOrder', SORT_ORDER.ASC)
 
-        const limit = parseInt(_.get(args, 'commonFilter.limit', 100))
+        const limit = parseInt(_.get(args, 'filter.commonFilter.limit', 100))
         if (limit > 100) {
             throw new UserInputError(`limit cannot be greater than 100`)
         }
 
         // handle user-provided Cursor
-        const before = _.get(args, 'commonFilter.before')
-        const after = _.get(args, 'commonFilter.after')
+        const before = _.get(args, 'filter.commonFilter.before')
+        const after = _.get(args, 'filter.commonFilter.after')
         if (!_.isNil(before) && !_.isNil(after)) {
             throw new UserInputError(`Either 'before' or 'after' filter option can be allowed, but not both.`)
         }
@@ -189,8 +189,8 @@ const executeDbQuery = async (args, {
         // ----------------------
         /*
         // Common Filter handling
-        const page = parseInt(_.get(args, 'commonFilter.page', 1))
-        const limit = parseInt(_.get(args, 'commonFilter.limit', 100))
+        const page = parseInt(_.get(args, 'filter.commonFilter.page', 1))
+        const limit = parseInt(_.get(args, 'filter.commonFilter.limit', 100))
         const startIndex = (page - 1) * limit
         const endIndex = page * limit
 
